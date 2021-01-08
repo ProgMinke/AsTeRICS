@@ -13,9 +13,8 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 
+import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
-
-import com.google.gson.JsonParseException;
 
 import eu.asterics.component.sensor.alexacommandreceiver.server.exception.NoRequestMessageFoundException;
 import eu.asterics.component.sensor.alexacommandreceiver.server.exception.UnsupportedRequestException;
