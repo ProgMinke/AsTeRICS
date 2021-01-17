@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<componentTypes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:noNamespaceSchemaLocation="bundle_model.xsd">
+
+    <componentType id="asterics.AlexaCommandProcessor"
+                   canonical_name="eu.asterics.component.processor.alexacommandprocessor.AlexaCommandProcessorInstance">
+        <type subtype="Others">processor</type>
+        <singleton>false</singleton>
+        <description>My Plugin description</description>
+        <ports>
+			<inputPort id="deviceType">
+				<description>the device type to be controlled</description>
+				<mustBeConnected>false</mustBeConnected>
+				<dataType>string</dataType>
+			</inputPort>
+			<inputPort id="commandData">
+				<description>contains the data to execute on the selected device</description>
+				<mustBeConnected>false</mustBeConnected>
+				<dataType>string</dataType>
+			</inputPort>
+
+			<outputPort id="outInt">
+				<description>output integer for command</description>
+				<dataType>integer</dataType>
+			</outputPort>
+			<outputPort id="outString">
+				<description>output string for command</description>
+				<dataType>integer</dataType>
+			</outputPort>
+
+        </ports>
+		<events>
+			<eventListenerPort id="commandReceived">
+				<description>tiggered if a valid command has been received</description>
+			</eventListenerPort>
+
+			<eventTriggererPort id="mouseAction">
+				<description>triggers a command for a given mouse action</description>
+			</eventTriggererPort>
+			<eventTriggererPort id="keyboardAction">
+				<description>triggers a command for a given keyboard action</description>
+			</eventTriggererPort>
+
+		</events>			
+        <properties>
+
+        </properties>
+
+    </componentType>
+</componentTypes>
