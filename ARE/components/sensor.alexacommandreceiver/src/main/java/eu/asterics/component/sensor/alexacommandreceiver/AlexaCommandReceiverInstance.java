@@ -1,5 +1,4 @@
 
-
 /*
  *    AsTeRICS - Assistive Technology Rapid Integration and Construction Set
  * 
@@ -27,7 +26,7 @@
 
 package eu.asterics.component.sensor.alexacommandreceiver;
 
-
+import eu.asterics.component.sensor.alexacommandreceiver.server.LightweightHttpServer;
 import eu.asterics.mw.model.runtime.AbstractRuntimeComponentInstance;
 import eu.asterics.mw.model.runtime.IRuntimeEventListenerPort;
 import eu.asterics.mw.model.runtime.IRuntimeEventTriggererPort;
@@ -35,194 +34,178 @@ import eu.asterics.mw.model.runtime.IRuntimeInputPort;
 import eu.asterics.mw.model.runtime.IRuntimeOutputPort;
 import eu.asterics.mw.model.runtime.impl.DefaultRuntimeEventTriggererPort;
 import eu.asterics.mw.model.runtime.impl.DefaultRuntimeOutputPort;
+import eu.asterics.mw.services.AstericsThreadPool;
 
 /**
  * 
  * <Describe purpose of this module>
  * 
  * 
- *  
- * @author <your name> [<your email address>]
- *         Date: 
+ * 
+ * @author <your name> [<your email address>] Date:
  */
-public class AlexaCommandReceiverInstance extends AbstractRuntimeComponentInstance
-{
-	final IRuntimeOutputPort opDeviceType = new DefaultRuntimeOutputPort();
-	final IRuntimeOutputPort opCommandData = new DefaultRuntimeOutputPort();
-	final IRuntimeOutputPort opErrorData = new DefaultRuntimeOutputPort();
-	// Usage of an output port e.g.: opMyOutPort.sendData(ConversionUtils.intToBytes(10)); 
+public class AlexaCommandReceiverInstance extends AbstractRuntimeComponentInstance {
+    final IRuntimeOutputPort opDeviceType = new DefaultRuntimeOutputPort();
+    final IRuntimeOutputPort opCommandData = new DefaultRuntimeOutputPort();
+    final IRuntimeOutputPort opErrorData = new DefaultRuntimeOutputPort();
+    // Usage of an output port e.g.:
+    // opMyOutPort.sendData(ConversionUtils.intToBytes(10));
 
-	final IRuntimeEventTriggererPort etpCommandReceived = new DefaultRuntimeEventTriggererPort();
-	final IRuntimeEventTriggererPort etpErrorOccurred = new DefaultRuntimeEventTriggererPort();
-	// Usage of an event trigger port e.g.: etpMyEtPort.raiseEvent();
+    final IRuntimeEventTriggererPort etpCommandReceived = new DefaultRuntimeEventTriggererPort();
+    final IRuntimeEventTriggererPort etpErrorOccurred = new DefaultRuntimeEventTriggererPort();
+    // Usage of an event trigger port e.g.: etpMyEtPort.raiseEvent();
 
-	String propHostname = "localhost";
-	int propPort = 8182;
+    String propHostname = "localhost";
+    int propPort = 8182;
 
-	// declare member variables here
+    // declare member variables here
+    private LightweightHttpServer server;
 
-  
-    
-   /**
-    * The class constructor.
-    */
-    public AlexaCommandReceiverInstance()
-    {
-        // empty constructor
+    /**
+     * The class constructor.
+     */
+    public AlexaCommandReceiverInstance() {
+        server = new LightweightHttpServer(propHostname, propPort, opDeviceType, opCommandData, opErrorData, etpCommandReceived, etpErrorOccurred);
     }
 
-   /**
-    * returns an Input Port.
-    * @param portID   the name of the port
-    * @return         the input port or null if not found
-    */
-    public IRuntimeInputPort getInputPort(String portID)
-    {
+    /**
+     * returns an Input Port.
+     * 
+     * @param portID the name of the port
+     * @return the input port or null if not found
+     */
+    public IRuntimeInputPort getInputPort(String portID) {
 
-		return null;
-	}
+        return null;
+    }
 
     /**
      * returns an Output Port.
-     * @param portID   the name of the port
-     * @return         the output port or null if not found
+     * 
+     * @param portID the name of the port
+     * @return the output port or null if not found
      */
-    public IRuntimeOutputPort getOutputPort(String portID)
-	{
-		if ("deviceType".equalsIgnoreCase(portID))
-		{
-			return opDeviceType;
-		}
-		if ("commandData".equalsIgnoreCase(portID))
-		{
-			return opCommandData;
-		}
-		if ("errorData".equalsIgnoreCase(portID))
-		{
-			return opErrorData;
-		}
+    public IRuntimeOutputPort getOutputPort(String portID) {
+        if ("deviceType".equalsIgnoreCase(portID)) {
+            return opDeviceType;
+        }
+        if ("commandData".equalsIgnoreCase(portID)) {
+            return opCommandData;
+        }
+        if ("errorData".equalsIgnoreCase(portID)) {
+            return opErrorData;
+        }
 
-		return null;
-	}
+        return null;
+    }
 
     /**
      * returns an Event Listener Port.
-     * @param eventPortID   the name of the port
-     * @return         the EventListener port or null if not found
+     * 
+     * @param eventPortID the name of the port
+     * @return the EventListener port or null if not found
      */
-    public IRuntimeEventListenerPort getEventListenerPort(String eventPortID)
-    {
+    public IRuntimeEventListenerPort getEventListenerPort(String eventPortID) {
 
         return null;
     }
 
     /**
      * returns an Event Triggerer Port.
-     * @param eventPortID   the name of the port
-     * @return         the EventTriggerer port or null if not found
+     * 
+     * @param eventPortID the name of the port
+     * @return the EventTriggerer port or null if not found
      */
-    public IRuntimeEventTriggererPort getEventTriggererPort(String eventPortID)
-    {
-		if ("commandReceived".equalsIgnoreCase(eventPortID))
-		{
-			return etpCommandReceived;
-		}
-		if ("errorOccurred".equalsIgnoreCase(eventPortID))
-		{
-			return etpErrorOccurred;
-		}
+    public IRuntimeEventTriggererPort getEventTriggererPort(String eventPortID) {
+        if ("commandReceived".equalsIgnoreCase(eventPortID)) {
+            return etpCommandReceived;
+        }
+        if ("errorOccurred".equalsIgnoreCase(eventPortID)) {
+            return etpErrorOccurred;
+        }
 
         return null;
     }
-		
+
     /**
      * returns the value of the given property.
-     * @param propertyName   the name of the property
-     * @return               the property value or null if not found
+     * 
+     * @param propertyName the name of the property
+     * @return the property value or null if not found
      */
-    public Object getRuntimePropertyValue(String propertyName)
-    {
-		if ("hostname".equalsIgnoreCase(propertyName))
-		{
-			return propHostname;
-		}
-		if ("port".equalsIgnoreCase(propertyName))
-		{
-			return propPort;
-		}
+    public Object getRuntimePropertyValue(String propertyName) {
+        if ("hostname".equalsIgnoreCase(propertyName)) {
+            return propHostname;
+        }
+        if ("port".equalsIgnoreCase(propertyName)) {
+            return propPort;
+        }
 
         return null;
     }
 
     /**
      * sets a new value for the given property.
-     * @param propertyName   the name of the property
-     * @param newValue       the desired property value or null if not found
+     * 
+     * @param propertyName the name of the property
+     * @param newValue     the desired property value or null if not found
      */
-    public Object setRuntimePropertyValue(String propertyName, Object newValue)
-    {
-		if ("hostname".equalsIgnoreCase(propertyName))
-		{
-			final Object oldValue = propHostname;
-			propHostname = (String)newValue;
-			return oldValue;
-		}
-		if ("port".equalsIgnoreCase(propertyName))
-		{
-			final Object oldValue = propPort;
-			propPort = Integer.parseInt(newValue.toString());
-			return oldValue;
-		}
+    public Object setRuntimePropertyValue(String propertyName, Object newValue) {
+        if ("hostname".equalsIgnoreCase(propertyName)) {
+            final Object oldValue = propHostname;
+            propHostname = (String) newValue;
+            return oldValue;
+        }
+        if ("port".equalsIgnoreCase(propertyName)) {
+            final Object oldValue = propPort;
+            propPort = Integer.parseInt(newValue.toString());
+            return oldValue;
+        }
 
         return null;
     }
 
-     /**
-      * Input Ports for receiving values.
-      */
+    /**
+     * Input Ports for receiving values.
+     */
 
+    /**
+     * Event Listerner Ports.
+     */
 
-     /**
-      * Event Listerner Ports.
-      */
+    /**
+     * called when model is started.
+     */
+    @Override
+    public void start() {
+        super.start();
+        AstericsThreadPool.getInstance().execute(server);
+    }
 
-	
+    /**
+     * called when model is paused.
+     */
+    @Override
+    public void pause() {
+        super.pause();
+        server.shutdown();
+    }
 
-     /**
-      * called when model is started.
-      */
-      @Override
-      public void start()
-      {
+    /**
+     * called when model is resumed.
+     */
+    @Override
+    public void resume() {
+        super.resume();
+        AstericsThreadPool.getInstance().execute(server);
+    }
 
-          super.start();
-      }
-
-     /**
-      * called when model is paused.
-      */
-      @Override
-      public void pause()
-      {
-          super.pause();
-      }
-
-     /**
-      * called when model is resumed.
-      */
-      @Override
-      public void resume()
-      {
-          super.resume();
-      }
-
-     /**
-      * called when model is stopped.
-      */
-      @Override
-      public void stop()
-      {
-
-          super.stop();
-      }
+    /**
+     * called when model is stopped.
+     */
+    @Override
+    public void stop() {
+        super.stop();
+        server.shutdown();
+    }
 }

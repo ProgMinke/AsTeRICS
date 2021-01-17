@@ -3,4 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: asterics-sensors.alexacommandreceiver
 Bundle-SymbolicName: eu.asterics.component.sensor.alexacommandreceiver
 Bundle-Version: 0.1.0
+Bundle-ClassPath: .,
+ lib/jackson-core-asl-1.8.3.jar, 
+ lib/jackson-mapper-asl-1.8.3.jar
 DynamicImport-Package: *
