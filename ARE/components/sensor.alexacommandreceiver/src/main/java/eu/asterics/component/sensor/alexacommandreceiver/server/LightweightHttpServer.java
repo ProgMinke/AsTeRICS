@@ -1,9 +1,9 @@
 package eu.asterics.component.sensor.alexacommandreceiver.server;
 
 import static eu.asterics.component.sensor.alexacommandreceiver.server.message.HttpMessageParser.parseAndValidate;
-import static eu.asterics.component.sensor.alexacommandreceiver.server.message.HttpResponseBuilder.JSON_CONTENT_TYPE;
-import static eu.asterics.component.sensor.alexacommandreceiver.server.message.HttpStatusCode.HTTP_200;
+import static eu.asterics.component.sensor.alexacommandreceiver.server.message.HttpStatusCode.HTTP_204;
 import static eu.asterics.component.sensor.alexacommandreceiver.server.message.HttpStatusCode.HTTP_400;
+import static eu.asterics.component.sensor.alexacommandreceiver.server.message.HttpStatusCode.HTTP_500;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -12,18 +12,24 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
-import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Random;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
+import org.codehaus.jackson.map.ObjectMapper;
 
+import eu.asterics.component.sensor.alexacommandreceiver.server.event.ContentReceivedEventListener;
 import eu.asterics.component.sensor.alexacommandreceiver.server.exception.NoRequestMessageFoundException;
 import eu.asterics.component.sensor.alexacommandreceiver.server.exception.UnsupportedRequestException;
 import eu.asterics.component.sensor.alexacommandreceiver.server.message.AlexaRequestJson;
+import eu.asterics.component.sensor.alexacommandreceiver.server.message.AlexaResponseJson;
 import eu.asterics.component.sensor.alexacommandreceiver.server.message.HttpResponseBuilder;
-import eu.asterics.mw.model.runtime.IRuntimeEventTriggererPort;
-import eu.asterics.mw.model.runtime.IRuntimeOutputPort;
+import eu.asterics.component.sensor.alexacommandreceiver.server.message.HttpStatusCode;
 import eu.asterics.mw.services.AstericsErrorHandling;
 
 public class LightweightHttpServer implements Runnable {
@@ -39,73 +45,39 @@ public class LightweightHttpServer implements Runnable {
 
     private boolean running = false;
 
-    // asterics ports
-    private final IRuntimeOutputPort opDeviceType;
-    private final IRuntimeOutputPort opCommandData;
-    private final IRuntimeOutputPort opErrorData;
+    private Map<String, ContentReceivedEventListener> listeners = new HashMap<>();
 
-    private final IRuntimeEventTriggererPort etpCommandReceived;
-    private final IRuntimeEventTriggererPort etpErrorOccurred;
-
-    public LightweightHttpServer(String propHostname, int propPort, IRuntimeOutputPort opDeviceType, IRuntimeOutputPort opCommandData,
-            IRuntimeOutputPort opErrorData, IRuntimeEventTriggererPort etpCommandReceived, IRuntimeEventTriggererPort etpErrorOccurred) {
+    public LightweightHttpServer(String propHostname, int propPort) {
         this.hostname = propHostname;
         this.port = propPort;
-
-        this.opDeviceType = opDeviceType;
-        this.opCommandData = opCommandData;
-        this.opErrorData = opErrorData;
-        this.etpCommandReceived = etpCommandReceived;
-        this.etpErrorOccurred = etpErrorOccurred;
-
     }
 
     @Override
     public void run() {
+        Thread.currentThread().setName(this.getClass().getName() + new Random().nextInt(100));
         configureServerSocketChannel();
         AstericsErrorHandling.instance.getLogger().log(Level.ALL, "LightweightHttpServer started...");
 
         while (running) {
             try {
-                sel.select();
+                if (sel.select(500) == 0) {
+                    continue;
+                }
 
                 SocketChannel client = serverChannel.accept();
                 byte[] messageData = readMessage(client);
 
                 try {
                     AlexaRequestJson requestJson = parseAndValidate(messageData, "POST", "/alexa", "application/json", AlexaRequestJson.class);
-                    System.out.println(requestJson);
-
-                    opDeviceType.sendData(requestJson.getCommandType().getBytes(StandardCharsets.ISO_8859_1));
-                    opCommandData.sendData(requestJson.getPayload().getBytes(StandardCharsets.ISO_8859_1));
-                    opErrorData.sendData("No Error".getBytes(StandardCharsets.ISO_8859_1));
-                    // TODO do something with received data
-                    String payload = "{ \"errorMessage\":\"no error\" }";
-                    String response = new HttpResponseBuilder().statusCode(HTTP_200).contentType(JSON_CONTENT_TYPE).payload(payload).build();
-                    System.out.println(response);
-                    System.out.println("Bytes written: " + client.write(ByteBuffer.wrap(response.getBytes())));
-                    etpCommandReceived.raiseEvent();
-                    System.out.println("Raised event commandReceived");
-                } catch (UnsupportedRequestException | NoRequestMessageFoundException e) {
-                    String payload = "{ \"errorMessage\":\"" + e.getMessage().substring(0, 20) + "\n}";
-                    String response = new HttpResponseBuilder().statusCode(HTTP_400).payload(payload).build();
-
-                    System.out.println(response);
-                    client.write(ByteBuffer.wrap(response.getBytes()));
-                    opErrorData.sendData(response.getBytes(StandardCharsets.ISO_8859_1));
-                    etpErrorOccurred.raiseEvent();
-                } catch (JsonMappingException | JsonParseException e) {
-                    String payload = "{ \"errorMessage\":\"" + e.getMessage().substring(0, 20) + "\n}";
-                    String response = new HttpResponseBuilder().statusCode(HTTP_400).payload(payload).build();
-                    System.out.println(response);
-
-                    client.write(ByteBuffer.wrap(response.getBytes()));
-                    opErrorData.sendData(response.getBytes(StandardCharsets.ISO_8859_1));
-                    etpErrorOccurred.raiseEvent();
+                    sendResponse(client, null, HTTP_204);
+                    callListenerOnReceived(requestJson);
+                } catch (UnsupportedRequestException | NoRequestMessageFoundException | JsonMappingException | JsonParseException exception) {
+                    sendResponse(client, exception.getMessage(), HTTP_400);
+                    callListenerOnError(exception);
                 }
 
                 client.close();
-
+                resetKeyForNextConnection();
             } catch (IOException e) {
                 // TODO log or re-throw?
                 e.printStackTrace();
@@ -117,6 +89,50 @@ public class LightweightHttpServer implements Runnable {
             // TODO log or re-throw?
             e.printStackTrace();
         }
+    }
+
+    private void resetKeyForNextConnection() {
+        Iterator<SelectionKey> selector = sel.selectedKeys().iterator();
+        selector.next();
+        selector.remove(); // needed that it can be selected again
+    }
+
+    private void callListenerOnError(final Exception e) {
+        listeners.values().forEach(new Consumer<ContentReceivedEventListener>() {
+            @Override
+            public void accept(ContentReceivedEventListener listener) {
+                listener.onErrorOccurred(e);
+            }
+        });
+    }
+
+    private void callListenerOnReceived(final AlexaRequestJson requestJson) {
+        listeners.values().forEach(new Consumer<ContentReceivedEventListener>() {
+            @Override
+            public void accept(ContentReceivedEventListener listener) {
+                listener.onContentReceived(requestJson);
+            }
+        });
+    }
+
+    private static void sendResponse(SocketChannel client, String payload, HttpStatusCode statusCode) throws IOException {
+        HttpResponseBuilder builder = new HttpResponseBuilder().statusCode(statusCode);
+
+        if (payload != null) {
+            String jsonString = null;
+            try {
+                jsonString = new ObjectMapper().writeValueAsString(new AlexaResponseJson(payload));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            if (jsonString != null) {
+                builder.payload(jsonString);
+            } else {
+                builder.statusCode(HTTP_500);
+            }
+        }
+
+        client.write(ByteBuffer.wrap(builder.build()));
     }
 
     private static byte[] readMessage(SocketChannel channel) throws IOException {
@@ -147,5 +163,22 @@ public class LightweightHttpServer implements Runnable {
 
     public void shutdown() {
         running = false;
+        try {
+            sel.wakeup();
+            sel.close();
+        } catch (IOException e) {
+        }
+    }
+
+    public void addContentReceivedEventListener(String name, ContentReceivedEventListener listener) {
+        if (listeners.containsKey(name)) {
+            throw new IllegalArgumentException("Event listner names must be unique. Delete before entering a listener with the same name.");
+        }
+
+        listeners.put(name, listener);
+    }
+
+    public void deleteContentReceivedEventListener(String name) {
+        listeners.remove(name);
     }
 }

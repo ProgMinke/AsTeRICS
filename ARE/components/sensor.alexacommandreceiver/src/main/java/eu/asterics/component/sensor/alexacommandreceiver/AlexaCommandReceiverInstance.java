@@ -26,7 +26,12 @@
 
 package eu.asterics.component.sensor.alexacommandreceiver;
 
+import java.nio.charset.StandardCharsets;
+
+import eu.asterics.component.sensor.alexacommandreceiver.gui.GUI;
 import eu.asterics.component.sensor.alexacommandreceiver.server.LightweightHttpServer;
+import eu.asterics.component.sensor.alexacommandreceiver.server.event.ContentReceivedEventListener;
+import eu.asterics.component.sensor.alexacommandreceiver.server.message.AlexaRequestJson;
 import eu.asterics.mw.model.runtime.AbstractRuntimeComponentInstance;
 import eu.asterics.mw.model.runtime.IRuntimeEventListenerPort;
 import eu.asterics.mw.model.runtime.IRuntimeEventTriggererPort;
@@ -34,6 +39,7 @@ import eu.asterics.mw.model.runtime.IRuntimeInputPort;
 import eu.asterics.mw.model.runtime.IRuntimeOutputPort;
 import eu.asterics.mw.model.runtime.impl.DefaultRuntimeEventTriggererPort;
 import eu.asterics.mw.model.runtime.impl.DefaultRuntimeOutputPort;
+import eu.asterics.mw.services.AREServices;
 import eu.asterics.mw.services.AstericsThreadPool;
 
 /**
@@ -48,24 +54,23 @@ public class AlexaCommandReceiverInstance extends AbstractRuntimeComponentInstan
     final IRuntimeOutputPort opDeviceType = new DefaultRuntimeOutputPort();
     final IRuntimeOutputPort opCommandData = new DefaultRuntimeOutputPort();
     final IRuntimeOutputPort opErrorData = new DefaultRuntimeOutputPort();
-    // Usage of an output port e.g.:
-    // opMyOutPort.sendData(ConversionUtils.intToBytes(10));
 
     final IRuntimeEventTriggererPort etpCommandReceived = new DefaultRuntimeEventTriggererPort();
     final IRuntimeEventTriggererPort etpErrorOccurred = new DefaultRuntimeEventTriggererPort();
-    // Usage of an event trigger port e.g.: etpMyEtPort.raiseEvent();
 
     String propHostname = "localhost";
     int propPort = 8182;
+    boolean propEnableDebugView = true;
 
     // declare member variables here
     private LightweightHttpServer server;
+    private GUI gui;
 
     /**
      * The class constructor.
      */
     public AlexaCommandReceiverInstance() {
-        server = new LightweightHttpServer(propHostname, propPort, opDeviceType, opCommandData, opErrorData, etpCommandReceived, etpErrorOccurred);
+        server = new LightweightHttpServer(propHostname, propPort);
     }
 
     /**
@@ -140,6 +145,9 @@ public class AlexaCommandReceiverInstance extends AbstractRuntimeComponentInstan
         if ("port".equalsIgnoreCase(propertyName)) {
             return propPort;
         }
+        if ("enableDebugView".equalsIgnoreCase(propertyName)) {
+            return propEnableDebugView;
+        }
 
         return null;
     }
@@ -161,6 +169,11 @@ public class AlexaCommandReceiverInstance extends AbstractRuntimeComponentInstan
             propPort = Integer.parseInt(newValue.toString());
             return oldValue;
         }
+        if ("enableDebugView".equalsIgnoreCase(propertyName)) {
+            final Object oldValue = propEnableDebugView;
+            propEnableDebugView = Boolean.parseBoolean(newValue.toString());
+            return oldValue;
+        }
 
         return null;
     }
@@ -179,7 +192,7 @@ public class AlexaCommandReceiverInstance extends AbstractRuntimeComponentInstan
     @Override
     public void start() {
         super.start();
-        AstericsThreadPool.getInstance().execute(server);
+        startServer();
     }
 
     /**
@@ -188,7 +201,7 @@ public class AlexaCommandReceiverInstance extends AbstractRuntimeComponentInstan
     @Override
     public void pause() {
         super.pause();
-        server.shutdown();
+//        stopServer(); TODO check why the model is paused randomly... this breaks server execution, or change what is changed w
     }
 
     /**
@@ -197,7 +210,7 @@ public class AlexaCommandReceiverInstance extends AbstractRuntimeComponentInstan
     @Override
     public void resume() {
         super.resume();
-        AstericsThreadPool.getInstance().execute(server);
+        startServer();
     }
 
     /**
@@ -206,6 +219,60 @@ public class AlexaCommandReceiverInstance extends AbstractRuntimeComponentInstan
     @Override
     public void stop() {
         super.stop();
+        stopServer();
+    }
+
+    private void startServer() {
+        AstericsThreadPool.getInstance().execute(server);
+        server.addContentReceivedEventListener("standard listener", getEventListener());
+        startUI();
+    }
+
+    private void stopServer() {
         server.shutdown();
+        server.deleteContentReceivedEventListener("standard listener");
+        stopUI();
+    }
+
+    private void stopUI() {
+        if (propEnableDebugView) {
+            AREServices.instance.displayPanel(gui, this, false);
+        }
+    }
+
+    private void startUI() {
+        if (propEnableDebugView) {
+            gui = new GUI(AREServices.instance.getAvailableSpace(this));
+            AREServices.instance.displayPanel(gui, this, true);
+        }
+    }
+
+    private ContentReceivedEventListener getEventListener() {
+        return new ContentReceivedEventListener() {
+
+            private boolean guiEnabled = propEnableDebugView;
+
+            @Override
+            public void onErrorOccurred(Exception exception) {
+                opErrorData.sendData(exception.getMessage().getBytes(StandardCharsets.ISO_8859_1));
+                etpErrorOccurred.raiseEvent();
+
+                if (guiEnabled) {
+                    gui.setMessage("", "", exception.getMessage().substring(0, 20));
+                }
+            }
+
+            @Override
+            public void onContentReceived(AlexaRequestJson payload) {
+                opDeviceType.sendData(payload.getCommandType().getBytes(StandardCharsets.ISO_8859_1));
+                opCommandData.sendData(payload.getPayload().getBytes(StandardCharsets.ISO_8859_1));
+                opErrorData.sendData("No Error".getBytes(StandardCharsets.ISO_8859_1));
+                etpCommandReceived.raiseEvent();
+
+                if (guiEnabled) {
+                    gui.setMessage(payload.getCommandType(), payload.getPayload(), "");
+                }
+            }
+        };
     }
 }
