@@ -2,6 +2,7 @@ package eu.asterics.component.sensor.alexacommandreceiver.server.message;
 
 import static eu.asterics.component.sensor.alexacommandreceiver.server.message.HttpStatusCode.HTTP_204;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 public class HttpResponseBuilder {
@@ -50,7 +51,7 @@ public class HttpResponseBuilder {
 		return this;
 	}
 
-	public String build() {
+	public byte[] build() {
 		StringBuffer sb = new StringBuffer();
 		sb.append(httpVersion + " " + statusCode.getMessage() + "\n");
 		sb.append("Connection: " + connection + "\n");
@@ -59,6 +60,6 @@ public class HttpResponseBuilder {
 			sb.append("Content-Length: " + payload.length() + "\n\n");
 			sb.append(payload);
 		}
-		return sb.toString();
+		return sb.toString().getBytes(StandardCharsets.ISO_8859_1);
 	}
 }

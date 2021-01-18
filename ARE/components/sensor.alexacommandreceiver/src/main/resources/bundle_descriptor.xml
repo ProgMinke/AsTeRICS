@@ -1,49 +1,57 @@
 <?xml version="1.0"?>
-<componentTypes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-            xsi:noNamespaceSchemaLocation="bundle_model.xsd">
+<componentTypes
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="bundle_model.xsd">
 
-    <componentType id="asterics.AlexaCommandReceiver"
-                   canonical_name="eu.asterics.component.sensor.alexacommandreceiver.AlexaCommandReceiverInstance">
-        <type subtype="Others">sensor</type>
-        <singleton>true</singleton>
-        <description>use alexa as input for generic commands</description>
-        <ports>
+	<componentType id="asterics.AlexaCommandReceiver"
+		canonical_name="eu.asterics.component.sensor.alexacommandreceiver.AlexaCommandReceiverInstance">
+		<type subtype="Others">sensor</type>
+		<singleton>true</singleton>
+		<description>use Amazon Alexa as input for generic commands
+		</description>
+		<ports>
 
 			<outputPort id="deviceType">
 				<description>the device type to be controlled</description>
 				<dataType>string</dataType>
 			</outputPort>
 			<outputPort id="commandData">
-				<description>contains the data to execute on the selected device</description>
+				<description>contains the data to execute on the selected device
+				</description>
 				<dataType>string</dataType>
 			</outputPort>
 			<outputPort id="errorData">
-				<description>contains detailed information in case of an error</description>
+				<description>contains detailed information in case of an error
+				</description>
 				<dataType>string</dataType>
 			</outputPort>
-
-        </ports>
+		</ports>
 		<events>
 
 			<eventTriggererPort id="commandReceived">
-				<description>tiggered if a valid command has been received</description>
+				<description>triggered if a valid command has been received
+				</description>
 			</eventTriggererPort>
 			<eventTriggererPort id="errorOccurred">
-				<description>triggered if an error occurred and detailed  information is available on errorData output</description>
+				<description>triggered if an error occurred and detailed information
+					is available on errorData output
+				</description>
 			</eventTriggererPort>
+		</events>
+		<properties>
+			<property name="hostname" type="string" value="localhost"
+				description="the servers hostname" />
+			<property name="port" type="integer" value="8182"
+				description="the servers port" />
+			<property name="enableDebugView" type="boolean"
+				value="false"
+				description="enables a debug view to display received data and errors" />
+		</properties>
 
-		</events>			
-        <properties>
-			<property name="hostname"
-				type="string"
-				value="localhost"
-				description="the servers hostname"/>
-			<property name="port"
-				type="integer"
-				value="8182"
-				description="the servers port"/>
+		<gui>
+			<width>3000</width>
+			<height>2000</height>
+		</gui>
 
-        </properties>
-
-    </componentType>
+	</componentType>
 </componentTypes>
