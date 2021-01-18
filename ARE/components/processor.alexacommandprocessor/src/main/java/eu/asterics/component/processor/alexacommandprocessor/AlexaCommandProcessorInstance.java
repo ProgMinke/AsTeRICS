@@ -28,7 +28,11 @@
 package eu.asterics.component.processor.alexacommandprocessor;
 
 
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.logging.Logger;
+
+import eu.asterics.component.actuator.androidphonecontrol.ProtocolService;
 import eu.asterics.mw.data.ConversionUtils;
 import eu.asterics.mw.model.runtime.AbstractRuntimeComponentInstance;
 import eu.asterics.mw.model.runtime.IRuntimeInputPort;
@@ -39,7 +43,10 @@ import eu.asterics.mw.model.runtime.impl.DefaultRuntimeOutputPort;
 import eu.asterics.mw.model.runtime.impl.DefaultRuntimeInputPort;
 import eu.asterics.mw.model.runtime.impl.DefaultRuntimeEventTriggererPort;
 import eu.asterics.mw.services.AstericsErrorHandling;
+import eu.asterics.mw.services.AstericsThreadPool;
 import eu.asterics.mw.services.AREServices;
+import java.awt.event.MouseInstance;
+import java.awt.event.MouseEvent;
 
 /**
  * 
@@ -62,6 +69,11 @@ public class AlexaCommandProcessorInstance extends AbstractRuntimeComponentInsta
 
 
 	// declare member variables here
+    String deviceType = "";
+    String commandData = "";
+    
+    private final String MOUSE_TYPE = "MOUSE";
+    private final String KEYBOARD_TYPE = "KEYBOARD";
 
   
     
@@ -174,20 +186,14 @@ public class AlexaCommandProcessorInstance extends AbstractRuntimeComponentInsta
 	{
 		public void receiveData(byte[] data)
 		{
-				 // insert data reception handling here, e.g.: 
-				 // myVar = ConversionUtils.doubleFromBytes(data); 
-				 // myVar = ConversionUtils.stringFromBytes(data); 
-				 // myVar = ConversionUtils.intFromBytes(data); 
+			deviceType = ConversionUtils.stringFromBytes(data);
 		}
 	};
 	private final IRuntimeInputPort ipCommandData  = new DefaultRuntimeInputPort()
 	{
 		public void receiveData(byte[] data)
-		{
-				 // insert data reception handling here, e.g.: 
-				 // myVar = ConversionUtils.doubleFromBytes(data); 
-				 // myVar = ConversionUtils.stringFromBytes(data); 
-				 // myVar = ConversionUtils.intFromBytes(data); 
+		{	
+			commandData = ConversionUtils.stringFromBytes(data);
 		}
 	};
 
@@ -199,6 +205,20 @@ public class AlexaCommandProcessorInstance extends AbstractRuntimeComponentInsta
 	{
 		public void receiveEvent(final String data)
 		{
+			if(deviceType.equalsIgnoreCase(MOUSE_TYPE)) {
+				//TODO send command to mouse
+				opOutString.sendData(ConversionUtils.stringToBytes(ipCommandData));
+				addMouseListener(new MouseInstance() {
+		            @Override
+		            public void mousePressed(MouseEvent me) {
+		                System.out.println("click ");
+		            	etpMouseAction.raiseEvent();
+		            }
+			}else if(deviceType.equalsIgnoreCase(KEYBOARD_TYPE)) {
+				//TODO generate keyboard code from command
+				//send command to keyboard
+				opOutInt.sendData(ConversionUtils.stringToBytes(ipCommandData));
+			}
 			
 		}
 	};
