@@ -20,11 +20,11 @@
 			</inputPort>
 
 			<outputPort id="outInt">
-				<description>output port description</description>
+				<description>the command data as integer</description>
 				<dataType>integer</dataType>
 			</outputPort>
 			<outputPort id="outString">
-				<description>output string for command</description>
+				<description>the command data as string</description>
 				<dataType>string</dataType>
 			</outputPort>
 
@@ -35,10 +35,13 @@
 			</eventListenerPort>
 
 			<eventTriggererPort id="mouseAction">
-				<description>triggers a command for a given mouse action</description>
+				<description>triggered if a mouse command should be performed</description>
 			</eventTriggererPort>
 			<eventTriggererPort id="keyboardAction">
-				<description>triggers a command for a given keyboard action</description>
+				<description>triggered if a keyboard command should be performed</description>
+			</eventTriggererPort>
+			<eventTriggererPort id="applicationAction">
+				<description>triggered if a application command should be performed</description>
 			</eventTriggererPort>
 
 		</events>			

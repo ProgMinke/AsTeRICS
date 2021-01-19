@@ -56,7 +56,7 @@ import eu.asterics.mw.utils.OSUtils;
  * function / keycodes are supported right now.
  * 
  * @author Christoph Veigl [christoph.veigl@technikum-wien.at] Date: Apr 24,
- *         2011 Time: 04:45:08 PM 
+ *         2011 Time: 04:45:08 PM
  */
 public class KeyboardInstance extends AbstractRuntimeComponentInstance {
     /**
@@ -84,8 +84,9 @@ public class KeyboardInstance extends AbstractRuntimeComponentInstance {
 
     private String propKeyCodeString = "";
     private int propInputMethod = 1;
-    private static final int JNATIVEHOOK_INPUTMETHOD=2;
+    private static final int JNATIVEHOOK_INPUTMETHOD = 2;
     private int propWaitTime = 1000;
+    private boolean propOnlyByEvent = false;
 
     private int actSendPos = 0;
     private Vector<Integer> keyCodeArray;
@@ -167,8 +168,7 @@ public class KeyboardInstance extends AbstractRuntimeComponentInstance {
     /**
      * returns an Input Port.
      * 
-     * @param portID
-     *            the name of the port
+     * @param portID the name of the port
      * @return the input port or null if not found
      */
     @Override
@@ -182,8 +182,7 @@ public class KeyboardInstance extends AbstractRuntimeComponentInstance {
     /**
      * returns an Output Port.
      * 
-     * @param portID
-     *            the name of the port
+     * @param portID the name of the port
      * @return the output port or null if not found
      */
     @Override
@@ -194,8 +193,7 @@ public class KeyboardInstance extends AbstractRuntimeComponentInstance {
     /**
      * returns an Event Listener Port.
      * 
-     * @param portID
-     *            the name of the port
+     * @param portID the name of the port
      * @return the event listener port or null if not found
      */
     @Override
@@ -215,8 +213,7 @@ public class KeyboardInstance extends AbstractRuntimeComponentInstance {
     /**
      * returns the value of the given property.
      * 
-     * @param propertyName
-     *            the name of the property
+     * @param propertyName the name of the property
      * @return the property value or null if not found
      */
     @Override
@@ -225,7 +222,8 @@ public class KeyboardInstance extends AbstractRuntimeComponentInstance {
             return propKeyCodeString;
         }
         if ("inputMethod".equalsIgnoreCase(propertyName)) {
-            //The input method can only be selected, if on Windows. For other OSes, force JNativeHook.
+            // The input method can only be selected, if on Windows. For other OSes, force
+            // JNativeHook.
             if (OSUtils.isWindows()) {
                 return propInputMethod;
             } else {
@@ -235,16 +233,17 @@ public class KeyboardInstance extends AbstractRuntimeComponentInstance {
         if ("waitTime".equalsIgnoreCase(propertyName)) {
             return propWaitTime;
         }
+        if ("onlyByEvent".equalsIgnoreCase(propertyName)) {
+            return propOnlyByEvent;
+        }
         return null;
     }
 
     /**
      * sets a new value for the given property.
      * 
-     * @param propertyName
-     *            the name of the property
-     * @param newValue
-     *            the desired property value
+     * @param propertyName the name of the property
+     * @param newValue     the desired property value
      */
     @Override
     public Object setRuntimePropertyValue(String propertyName, Object newValue) {
@@ -256,13 +255,14 @@ public class KeyboardInstance extends AbstractRuntimeComponentInstance {
             return oldValue;
         } else if ("inputMethod".equalsIgnoreCase(propertyName)) {
             final Integer oldValue = this.propInputMethod;
-            //The input method can only be selected, if on Windows. For other OSes, force JNativeHook.
+            // The input method can only be selected, if on Windows. For other OSes, force
+            // JNativeHook.
             if (OSUtils.isWindows()) {
                 propInputMethod = Integer.parseInt((String) newValue);
             } else {
-                propInputMethod=JNATIVEHOOK_INPUTMETHOD;
+                propInputMethod = JNATIVEHOOK_INPUTMETHOD;
             }
-            
+
             return oldValue;
         } else if ("waitTime".equalsIgnoreCase(propertyName)) {
             final Integer oldValue = propWaitTime;
@@ -270,6 +270,10 @@ public class KeyboardInstance extends AbstractRuntimeComponentInstance {
             if (propWaitTime < 1) {
                 propWaitTime = 1;
             }
+            return oldValue;
+        } else if ("onlyByEvent".equalsIgnoreCase(propertyName)) {
+            final boolean oldValue = propOnlyByEvent;
+            propOnlyByEvent = Boolean.parseBoolean((String) newValue);
             return oldValue;
         }
 
@@ -538,8 +542,8 @@ public class KeyboardInstance extends AbstractRuntimeComponentInstance {
             Field f;
             try {
                 NativeKeyHelper helper = fixNativeHook21KeyLocation(getVirtualKeycode(actcode));
-                AstericsErrorHandling.instance.getLogger().fine("KeyboardInstance: "+helper.toString());
-                
+                AstericsErrorHandling.instance.getLogger().fine("KeyboardInstance: " + helper.toString());
+
                 f = NativeKeyEvent.class.getField(helper.VC_name);
                 Class<?> t = f.getType();
                 if (t == int.class) {
@@ -548,16 +552,14 @@ public class KeyboardInstance extends AbstractRuntimeComponentInstance {
                         // AstericsErrorHandling.instance.getLogger().fine("press
                         // virtual keycode="+virtualKeycode);
 
-                        NativeKeyEvent keyEvent = new NativeKeyEvent(NativeKeyEvent.NATIVE_KEY_PRESSED,
-                                0x00, // Modifiers
+                        NativeKeyEvent keyEvent = new NativeKeyEvent(NativeKeyEvent.NATIVE_KEY_PRESSED, 0x00, // Modifiers
                                 0x00, // Raw Code
                                 virtualKeycode, // NativeKeyEvent.VC_UNDEFINED,
                                 NativeKeyEvent.CHAR_UNDEFINED, helper.keyLocation);
 
                         GlobalScreen.postNativeEvent(keyEvent);
                     } catch (IllegalArgumentException | IllegalAccessException e) {
-                        AstericsErrorHandling.instance.getLogger()
-                                .fine("JnativeHook key press Exception: " + e.getMessage());
+                        AstericsErrorHandling.instance.getLogger().fine("JnativeHook key press Exception: " + e.getMessage());
                     }
                 }
             } catch (NoSuchFieldException | SecurityException e1) {
@@ -583,8 +585,8 @@ public class KeyboardInstance extends AbstractRuntimeComponentInstance {
             Field f;
             try {
                 NativeKeyHelper helper = fixNativeHook21KeyLocation(getVirtualKeycode(actcode));
-                AstericsErrorHandling.instance.getLogger().fine("KeyboardInstance: "+helper.toString());
-                
+                AstericsErrorHandling.instance.getLogger().fine("KeyboardInstance: " + helper.toString());
+
                 f = NativeKeyEvent.class.getField(helper.VC_name);
                 Class<?> t = f.getType();
                 if (t == int.class) {
@@ -593,8 +595,7 @@ public class KeyboardInstance extends AbstractRuntimeComponentInstance {
                         // AstericsErrorHandling.instance.getLogger().fine("release
                         // virtual keycode="+virtualKeycode);
 
-                        NativeKeyEvent keyEvent = new NativeKeyEvent(NativeKeyEvent.NATIVE_KEY_RELEASED,
-                                0x00, // Modifiers
+                        NativeKeyEvent keyEvent = new NativeKeyEvent(NativeKeyEvent.NATIVE_KEY_RELEASED, 0x00, // Modifiers
                                 0x00, // Raw Code
                                 virtualKeycode, // NativeKeyEvent.VC_UNDEFINED
                                 NativeKeyEvent.CHAR_UNDEFINED, helper.keyLocation);
@@ -602,8 +603,7 @@ public class KeyboardInstance extends AbstractRuntimeComponentInstance {
                         GlobalScreen.postNativeEvent(keyEvent);
 
                     } catch (IllegalArgumentException | IllegalAccessException e) {
-                        AstericsErrorHandling.instance.getLogger()
-                                .fine("JnativeHook key release Exception: " + e.getMessage());
+                        AstericsErrorHandling.instance.getLogger().fine("JnativeHook key release Exception: " + e.getMessage());
 
                     }
                 }
@@ -615,29 +615,31 @@ public class KeyboardInstance extends AbstractRuntimeComponentInstance {
             break;
         }
     }
-    
+
     /**
-     * Fix for JNativeHook 2.1 where no VC_xx_L or VC_xx_R fields are supported any more.
-     * Instead there is a KEY_LOCATION indicating if, e.g. ALT LEFT or ALT RIGHT was pressed.
+     * Fix for JNativeHook 2.1 where no VC_xx_L or VC_xx_R fields are supported any
+     * more. Instead there is a KEY_LOCATION indicating if, e.g. ALT LEFT or ALT
+     * RIGHT was pressed.
+     * 
      * @param val
      * @return
      */
     NativeKeyHelper fixNativeHook21KeyLocation(String val) {
-        NativeKeyHelper helper=new NativeKeyHelper();
-        
-        helper.keyLocation=NativeKeyEvent.KEY_LOCATION_STANDARD;
-        helper.VC_name=val;
-        
-        if(!"VC_L".equals(val) && val.endsWith("_L")) {
-            helper.VC_name=val.substring(0,val.length()-2);
-            helper.keyLocation=NativeKeyEvent.KEY_LOCATION_LEFT;
-        } else if(!"VC_R".equals(val) && val.endsWith("_R")) {
-            helper.VC_name=val.substring(0,val.length()-2);
-            helper.keyLocation=NativeKeyEvent.KEY_LOCATION_RIGHT;
-        }              
+        NativeKeyHelper helper = new NativeKeyHelper();
+
+        helper.keyLocation = NativeKeyEvent.KEY_LOCATION_STANDARD;
+        helper.VC_name = val;
+
+        if (!"VC_L".equals(val) && val.endsWith("_L")) {
+            helper.VC_name = val.substring(0, val.length() - 2);
+            helper.keyLocation = NativeKeyEvent.KEY_LOCATION_LEFT;
+        } else if (!"VC_R".equals(val) && val.endsWith("_R")) {
+            helper.VC_name = val.substring(0, val.length() - 2);
+            helper.keyLocation = NativeKeyEvent.KEY_LOCATION_RIGHT;
+        }
         return helper;
     }
-     
+
     /**
      * sends a keycode of given index (in the keycode vector) and mode
      */
@@ -734,8 +736,9 @@ public class KeyboardInstance extends AbstractRuntimeComponentInstance {
             // keycodes);
             propKeyCodeString = ConversionUtils.stringFromBytes(data);
             keyCodeTranslate();
-            sendAllCodes();
-
+            if (!propOnlyByEvent) {
+                sendAllCodes();
+            }
         }
 
     };
@@ -794,7 +797,7 @@ public class KeyboardInstance extends AbstractRuntimeComponentInstance {
         super.start();
         // NativeHookServices.init();
         AstericsErrorHandling.instance.reportInfo(this, "KeyboardInstance started");
-        
+
     }
 
     /**
@@ -827,8 +830,9 @@ public class KeyboardInstance extends AbstractRuntimeComponentInstance {
 }
 
 class NativeKeyHelper {
-    int keyLocation=NativeKeyEvent.KEY_LOCATION_UNKNOWN;
-    String VC_name="";
+    int keyLocation = NativeKeyEvent.KEY_LOCATION_UNKNOWN;
+    String VC_name = "";
+
     @Override
     public String toString() {
         return "NativeKeyHelper [keyLocation=" + keyLocation + ", VC_name=" + VC_name + "]";

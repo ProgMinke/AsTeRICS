@@ -3,6 +3,7 @@ package eu.asterics.component.sensor.alexacommandreceiver.server;
 import static eu.asterics.component.sensor.alexacommandreceiver.server.message.HttpMessageParser.parseAndValidate;
 import static eu.asterics.component.sensor.alexacommandreceiver.server.message.HttpStatusCode.HTTP_204;
 import static eu.asterics.component.sensor.alexacommandreceiver.server.message.HttpStatusCode.HTTP_400;
+import static eu.asterics.component.sensor.alexacommandreceiver.server.message.HttpStatusCode.HTTP_404;
 import static eu.asterics.component.sensor.alexacommandreceiver.server.message.HttpStatusCode.HTTP_500;
 
 import java.io.IOException;
@@ -25,6 +26,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 
 import eu.asterics.component.sensor.alexacommandreceiver.server.event.ContentReceivedEventListener;
 import eu.asterics.component.sensor.alexacommandreceiver.server.exception.NoRequestMessageFoundException;
+import eu.asterics.component.sensor.alexacommandreceiver.server.exception.TargetNotFoundException;
 import eu.asterics.component.sensor.alexacommandreceiver.server.exception.UnsupportedRequestException;
 import eu.asterics.component.sensor.alexacommandreceiver.server.message.AlexaRequestJson;
 import eu.asterics.component.sensor.alexacommandreceiver.server.message.AlexaResponseJson;
@@ -73,6 +75,9 @@ public class LightweightHttpServer implements Runnable {
                     callListenerOnReceived(requestJson);
                 } catch (UnsupportedRequestException | NoRequestMessageFoundException | JsonMappingException | JsonParseException exception) {
                     sendResponse(client, exception.getMessage(), HTTP_400);
+                    callListenerOnError(exception);
+                } catch (TargetNotFoundException exception) {
+                    sendResponse(client, exception.getMessage(), HTTP_404);
                     callListenerOnError(exception);
                 }
 

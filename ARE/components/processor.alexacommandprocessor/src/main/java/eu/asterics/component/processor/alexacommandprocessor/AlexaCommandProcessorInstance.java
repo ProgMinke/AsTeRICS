@@ -54,6 +54,7 @@ public class AlexaCommandProcessorInstance extends AbstractRuntimeComponentInsta
 
     final IRuntimeEventTriggererPort etpMouseAction = new DefaultRuntimeEventTriggererPort();
     final IRuntimeEventTriggererPort etpKeyboardAction = new DefaultRuntimeEventTriggererPort();
+    final IRuntimeEventTriggererPort etpApplicationAction = new DefaultRuntimeEventTriggererPort();
     // Usage of an event trigger port e.g.: etpMyEtPort.raiseEvent();
 
     // declare member variables here
@@ -128,6 +129,9 @@ public class AlexaCommandProcessorInstance extends AbstractRuntimeComponentInsta
         if ("keyboardAction".equalsIgnoreCase(eventPortID)) {
             return etpKeyboardAction;
         }
+        if ("applicationAction".equalsIgnoreCase(eventPortID)) {
+            return etpApplicationAction;
+        }
 
         return null;
     }
@@ -171,7 +175,7 @@ public class AlexaCommandProcessorInstance extends AbstractRuntimeComponentInsta
     };
 
     /**
-     * Event Listerner Ports.
+     * Event Listener Ports.
      */
     final IRuntimeEventListenerPort elpCommandReceived = new IRuntimeEventListenerPort() {
         public void receiveEvent(final String data) {
@@ -190,11 +194,11 @@ public class AlexaCommandProcessorInstance extends AbstractRuntimeComponentInsta
             switch (commandData) {
             case "7ZIP":
                 opOutString.sendData("C:\\Program Files\\7-Zip\\7z.exe".getBytes(StandardCharsets.ISO_8859_1));
-                etpKeyboardAction.raiseEvent();
+                etpApplicationAction.raiseEvent();
                 break;
             case "NOTEPAD":
                 opOutString.sendData("c:\\windows\\notepad.exe".getBytes(StandardCharsets.ISO_8859_1));
-                etpKeyboardAction.raiseEvent();
+                etpApplicationAction.raiseEvent();
                 break;
             default:
                 System.out.println("Starting application '" + commandData + "' not supported yet.");
@@ -203,6 +207,7 @@ public class AlexaCommandProcessorInstance extends AbstractRuntimeComponentInsta
 
         private void handleKeyboard() {
             opOutString.sendData(commandData.getBytes(StandardCharsets.ISO_8859_1));
+            etpKeyboardAction.raiseEvent();
         }
 
         private void handleMouse() {
