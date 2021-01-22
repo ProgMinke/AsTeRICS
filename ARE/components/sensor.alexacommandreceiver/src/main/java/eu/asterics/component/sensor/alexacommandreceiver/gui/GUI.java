@@ -9,22 +9,40 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
 
+/**
+ * A simple gui for debug purposes. Can be deactivated with a property.
+ * 
+ * @author Thomas Sulzbacher
+ * @author Lisa Fixl
+ *
+ */
 public class GUI extends JPanel {
 
     private static final long serialVersionUID = -4832269915523104986L;
 
-    // ui parts
     private JLabel deviceType;
     private JLabel commandData;
     private JLabel errorData;
     private JLabel lastRequestTimeStamp;
 
+    /**
+     * The GUI's contructor.
+     * 
+     * @param space the desired space
+     */
     public GUI(Dimension space) {
         setPreferredSize(space);
         design();
         setVisible(true);
     }
 
+    /**
+     * Sets the given data into the gui elements.
+     * 
+     * @param deviceTypeMessage  the text for the deviceType label
+     * @param commandDataMessage the text for the commandData label
+     * @param errorDataMessage   the text for the errorMessage label
+     */
     public void setMessage(String deviceTypeMessage, String commandDataMessage, String errorDataMessage) {
         deviceType.setText(deviceTypeMessage);
         commandData.setText(commandDataMessage);

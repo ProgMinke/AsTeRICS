@@ -28,6 +28,7 @@ package eu.asterics.component.processor.alexacommandprocessor;
 
 import java.nio.charset.StandardCharsets;
 
+import eu.asterics.component.sensor.alexacommandreceiver.AlexaCommandReceiverInstance;
 import eu.asterics.mw.data.ConversionUtils;
 import eu.asterics.mw.model.runtime.AbstractRuntimeComponentInstance;
 import eu.asterics.mw.model.runtime.IRuntimeEventListenerPort;
@@ -40,22 +41,21 @@ import eu.asterics.mw.model.runtime.impl.DefaultRuntimeOutputPort;
 
 /**
  * 
- * <Describe purpose of this module>
+ * This module is for processing two inputs from eg. the
+ * {@link AlexaCommandReceiverInstance}.
  * 
  * 
  * 
- * @author <your name> [<your email address>] Date:
+ * @author Lisa Fixl [lisa.fixl@outlook.com] Date:22.01.2021s
+ * @author Thomas Sulzbacher[thomas.sulzbacher@me.com] Date:22.01.2021
  */
 public class AlexaCommandProcessorInstance extends AbstractRuntimeComponentInstance {
     final IRuntimeOutputPort opOutInt = new DefaultRuntimeOutputPort();
     final IRuntimeOutputPort opOutString = new DefaultRuntimeOutputPort();
-    // Usage of an output port e.g.:
-    // opMyOutPort.sendData(ConversionUtils.intToBytes(10));
 
     final IRuntimeEventTriggererPort etpMouseAction = new DefaultRuntimeEventTriggererPort();
     final IRuntimeEventTriggererPort etpKeyboardAction = new DefaultRuntimeEventTriggererPort();
     final IRuntimeEventTriggererPort etpApplicationAction = new DefaultRuntimeEventTriggererPort();
-    // Usage of an event trigger port e.g.: etpMyEtPort.raiseEvent();
 
     // declare member variables here
     private String deviceType;
@@ -192,8 +192,8 @@ public class AlexaCommandProcessorInstance extends AbstractRuntimeComponentInsta
 
         private void handleApplication() {
             switch (commandData) {
-            case "7ZIP":
-                opOutString.sendData("C:\\Program Files\\7-Zip\\7z.exe".getBytes(StandardCharsets.ISO_8859_1));
+            case "STEAM":
+                opOutString.sendData("C:\\Program Files (x86)\\Steam\\steam.exe".getBytes(StandardCharsets.ISO_8859_1));
                 etpApplicationAction.raiseEvent();
                 break;
             case "NOTEPAD":
@@ -227,7 +227,6 @@ public class AlexaCommandProcessorInstance extends AbstractRuntimeComponentInsta
      */
     @Override
     public void start() {
-
         super.start();
     }
 
@@ -252,7 +251,6 @@ public class AlexaCommandProcessorInstance extends AbstractRuntimeComponentInsta
      */
     @Override
     public void stop() {
-
         super.stop();
     }
 }

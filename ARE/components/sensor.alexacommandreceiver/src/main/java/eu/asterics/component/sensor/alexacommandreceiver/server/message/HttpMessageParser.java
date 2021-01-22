@@ -15,17 +15,39 @@ import eu.asterics.component.sensor.alexacommandreceiver.server.exception.NoRequ
 import eu.asterics.component.sensor.alexacommandreceiver.server.exception.TargetNotFoundException;
 import eu.asterics.component.sensor.alexacommandreceiver.server.exception.UnsupportedRequestException;
 
+/**
+ * This class implements a simple parser for HTTP messages.
+ * 
+ * @author Thomas Sulzbacher
+ * @author Lisa Fixl
+ *
+ */
 public class HttpMessageParser {
 
-    public static void main(String[] args) throws Exception {
-        String message = "POST /alexa HTTP/1.1\r\n" + "Host: 3bb4243e9b83.ngrok.io\r\n" + "User-Agent: PostmanRuntime/7.26.8\r\n" + "Content-Length: 64\r\n"
-                + "Accept: */*\r\n" + "Accept-Encoding: gzip, deflate, br\r\n" + "Content-Type: application/json\r\n"
-                + "Postman-Token: 4601ba85-3ad8-4d15-b230-f6da5e14896f\r\n" + "X-Forwarded-For: 193.171.43.23\r\n" + "X-Forwarded-Proto: http\r\n" + "\r\n"
-                + "{\r\n" + "    \"deviceType\": \"APPLICATION\",\r\n" + "    \"payload\": \"NOTEPAD\"\r\n" + "}";
-        AlexaRequestJson json = parseAndValidate(message.getBytes(), "POST", "/alexa", "application/json", AlexaRequestJson.class);
-        System.out.println(json);
-    }
-
+    /**
+     * Parses and validates the given HTTP message {@link Byte} array.
+     * 
+     * @param <T>          the generic type of the message's body to parse the
+     *                     content into
+     * @param requestArray the http message as {@link Byte} array
+     * @param httpMethod   the desired HTTP method as {@link String}
+     * @param url          the wanted path eg. /alexa
+     * @param contentType  the desired Content-Type value
+     * @param jsonClass    the type of class to parse the HTTP message's body into
+     * @return the parsed response in type of the jsonClass parameter
+     * @throws UnsupportedRequestException    if the Content-Type header is missing
+     *                                        or <code>null</code>
+     * @throws NoRequestMessageFoundException if the Content-Length header is
+     *                                        missing
+     * @throws TargetNotFoundException        if the given url is not the target of
+     *                                        the HTTP message
+     * @throws JsonParseException             if an error occurs while parsing the
+     *                                        messages body
+     * @throws JsonMappingException           if an error occurs while parsing the
+     *                                        messages body
+     * @throws IOException                    if an error ocurrs while parsing the
+     *                                        messages body
+     */
     public static <T> T parseAndValidate(byte[] requestArray, String httpMethod, String url, String contentType, Class<T> jsonClass)//
             throws UnsupportedRequestException, NoRequestMessageFoundException, TargetNotFoundException, JsonParseException, JsonMappingException, IOException {
         String[] requestLines = new String(requestArray, StandardCharsets.ISO_8859_1).split("\n");

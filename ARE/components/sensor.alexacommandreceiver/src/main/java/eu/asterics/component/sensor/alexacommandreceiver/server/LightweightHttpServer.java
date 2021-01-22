@@ -34,8 +34,20 @@ import eu.asterics.component.sensor.alexacommandreceiver.server.message.HttpResp
 import eu.asterics.component.sensor.alexacommandreceiver.server.message.HttpStatusCode;
 import eu.asterics.mw.services.AstericsErrorHandling;
 
+/**
+ * This class implements a simple HTTP server. It is capable of waiting for a
+ * single connection, handling it, sending some response and then closing the
+ * connection. You can register a listener to get notified about incoming
+ * messages and their payload. The server listens on the configured port and
+ * hostname under the subpath "/alexa" and checks basic HTTP headers and
+ * protocol structure. Note that it's not possible accept multiple connections
+ * at a time.
+ * 
+ * @author Thomas Sulzbacher
+ * @author Lisa Fixl
+ *
+ */
 public class LightweightHttpServer implements Runnable {
-    // TODO http://www.java2s.com/Code/Java/Network-Protocol/HttpParser.htm
 
     private static final int BUFFER_SIZE = 4096;
 
@@ -161,11 +173,13 @@ public class LightweightHttpServer implements Runnable {
             running = true;
         } catch (IOException e) {
             AstericsErrorHandling.instance.getLogger().severe("An error occurred while opening the server socket channel. Message: " + e.getMessage());
-            e.printStackTrace(); // TODO remove
-            running = false; // maybe remove if really unnecessary
+            running = false;
         }
     }
 
+    /**
+     * Closes incoming connections and safely turns off the server thread.
+     */
     public void shutdown() {
         running = false;
         try {
@@ -175,6 +189,12 @@ public class LightweightHttpServer implements Runnable {
         }
     }
 
+    /**
+     * Adds a {@link ContentReceivedEventListener} for event notifications.
+     * 
+     * @param name     the name of the event listener
+     * @param listener the listener implementation itself
+     */
     public void addContentReceivedEventListener(String name, ContentReceivedEventListener listener) {
         if (listeners.containsKey(name)) {
             throw new IllegalArgumentException("Event listner names must be unique. Delete before entering a listener with the same name.");
@@ -183,6 +203,11 @@ public class LightweightHttpServer implements Runnable {
         listeners.put(name, listener);
     }
 
+    /**
+     * Deletes the listener with the given name.
+     * 
+     * @param name the name of the listener
+     */
     public void deleteContentReceivedEventListener(String name) {
         listeners.remove(name);
     }

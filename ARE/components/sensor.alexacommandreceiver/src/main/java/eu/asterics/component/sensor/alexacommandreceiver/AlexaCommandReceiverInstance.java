@@ -44,11 +44,16 @@ import eu.asterics.mw.services.AstericsThreadPool;
 
 /**
  * 
- * <Describe purpose of this module>
+ * This module is the receiver part of the Alexa Asterics plugin series. It
+ * starts a simple HTTP server with one thread, only accepting one connection at
+ * a time. It then waits for HTTP POST requests coming in on default port 8182
+ * (configurable) at path http://localhost:8182/alexa. Please refer to
+ * {@link AlexaRequestJson} for HTTP body details.
  * 
  * 
  * 
- * @author <your name> [<your email address>] Date:
+ * @author Thomas Sulzbacher [thomas.sulzbacher@me.com] Date: 22.02.2021
+ * @author Lisa Fixl [lisa.fixl@outlook.com] Date: 22.02.2021
  */
 public class AlexaCommandReceiverInstance extends AbstractRuntimeComponentInstance {
     final IRuntimeOutputPort opDeviceType = new DefaultRuntimeOutputPort();
@@ -264,13 +269,13 @@ public class AlexaCommandReceiverInstance extends AbstractRuntimeComponentInstan
 
             @Override
             public void onContentReceived(AlexaRequestJson payload) {
-                opDeviceType.sendData(payload.getCommandType().getBytes(StandardCharsets.ISO_8859_1));
+                opDeviceType.sendData(payload.getDeviceType().getBytes(StandardCharsets.ISO_8859_1));
                 opCommandData.sendData(payload.getPayload().getBytes(StandardCharsets.ISO_8859_1));
                 opErrorData.sendData("No Error".getBytes(StandardCharsets.ISO_8859_1));
                 etpCommandReceived.raiseEvent();
 
                 if (guiEnabled) {
-                    gui.setMessage(payload.getCommandType(), payload.getPayload(), "");
+                    gui.setMessage(payload.getDeviceType(), payload.getPayload(), "");
                 }
             }
         };
