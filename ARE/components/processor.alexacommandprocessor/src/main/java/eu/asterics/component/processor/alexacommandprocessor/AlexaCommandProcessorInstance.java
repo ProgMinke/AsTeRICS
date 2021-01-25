@@ -28,7 +28,6 @@ package eu.asterics.component.processor.alexacommandprocessor;
 
 import java.nio.charset.StandardCharsets;
 
-import eu.asterics.component.sensor.alexacommandreceiver.AlexaCommandReceiverInstance;
 import eu.asterics.mw.data.ConversionUtils;
 import eu.asterics.mw.model.runtime.AbstractRuntimeComponentInstance;
 import eu.asterics.mw.model.runtime.IRuntimeEventListenerPort;
